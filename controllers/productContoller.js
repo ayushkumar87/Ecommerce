@@ -15,30 +15,50 @@ exports.addProduct=async(req,res)=>{
 };
 
 //Get Product(Public)
-exports.getProducts=async(req,res)=>{
-    try{
-        const page=parseInt(req.query.page)||1
-        const limit=parseInt(req.query.limit)||5
-        const search=req.query.search||""
+exports.getProducts = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 5;
 
-        const skip=(page-1)*limit;
+    const search = req.query.search || "";
+    const category = req.query.category;
+    const min = req.query.min;
+    const max = req.query.max;
 
-        const filter={
-            name:{$regex:search,$options:"i"}
-        }
+    const skip = (page - 1) * limit;
 
-        const products=await Product.find(filter)
-        .skip(skip)
-        .limit(limit)
+    // 🔥 Dynamic filter
+    let filter = {};
 
-        const total=await Product.countDocuments(filter)
-        res.json({page,total,products});
-
+    // Search
+    if (search) {
+      filter.name = { $regex: search, $options: "i" };
     }
-    catch(error){
-        res.status(500).json({message:error.message})
+
+    // Category
+    if (category) {
+      filter.category = category;
     }
-}
+
+    // Price range
+    if (min || max) {
+      filter.price = {};
+      if (min) filter.price.$gte = Number(min);
+      if (max) filter.price.$lte = Number(max);
+    }
+
+    const products = await Product.find(filter)
+      .skip(skip)
+      .limit(limit);
+
+    const total = await Product.countDocuments(filter);
+
+    res.json({ page, total, products });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 
 // UPDATE PRODUCT (ADMIN)
 exports.updateProduct = async (req, res) => {
