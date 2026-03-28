@@ -1,17 +1,32 @@
 const Product=require("../models/Product")
 
 //Add Product (Admin Only)
-exports.addProduct=async(req,res)=>{
-    try{
-        const product=new Product(req.body);
-        await product.save()
+exports.addProduct = async (req, res) => {
+  try {
+    const { name, description, price, stock, category } = req.body;
 
-        res.status(201).json({message:"Product added",product})
+    if (!name || !price || price <= 0) {
+    return res.status(400).json({ message: "Invalid input" });
+    }
 
-    }
-    catch(error){
-        res.status(500).json({message:error.message})
-    }
+    const image = req.file ? req.file.path : "";
+
+    const product = new Product({
+      name,
+      description,
+      price,
+      stock,
+      category,
+      image
+    });
+
+    await product.save();
+
+    res.json({ message: "Product added", product });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
 
 //Get Product(Public)
